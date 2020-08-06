@@ -100,6 +100,8 @@ Shoulda::Matchers.configure do |config|
   end
 end
 
+require 'webdrivers/chromedriver'
+
 Capybara.register_driver(:headless_chrome) do |app|
   caps = Selenium::WebDriver::Remote::Capabilities.chrome(
     chromeOptions: { args: %w[headless disable-gpu window-size=1920x1080] }

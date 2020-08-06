@@ -46,7 +46,7 @@ group :test do
   gem 'rspec_junit_formatter'
   gem 'fabrication'
   gem 'selenium-webdriver'
-  gem 'chromedriver-helper'
+  gem 'webdrivers', require: false
   gem 'capybara'
 end
 
