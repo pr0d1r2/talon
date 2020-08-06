@@ -15,13 +15,13 @@ chdir APP_ROOT do
   # Add necessary setup steps to this file.
 
   puts '== Installing dependencies =='
+  system!('bin/setup_macos') if `uname`.strip == 'Darwin'
   system!('bin/setup_ruby')
   system!('bin/setup_bundler')
   system('bundle check') || system!('bundle install')
 
   # Install JavaScript dependencies if using Yarn
-  # system('bin/yarn')
-
+  system!('bin/setup_yarn')
 
   # puts "\n== Copying sample files =="
   # unless File.exist?('config/database.yml')

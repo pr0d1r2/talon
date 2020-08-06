@@ -25,3 +25,4 @@
 /config/wwe_*
 /public/talon-*
 /.vscode
+Brewfile.lock.json

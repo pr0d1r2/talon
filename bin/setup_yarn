@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+D_R="$(cd "$(dirname "$0")" ; pwd -P)"
+
+export PATH="/usr/local/opt/$(cat Brewfile | grep node | cut -f 2 -d "'")/bin:$PATH"
+command -v yarn 1>/dev/null || npm install yarn@1.17.3 -g
+bin/yarn
