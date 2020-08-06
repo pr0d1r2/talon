@@ -16,7 +16,7 @@ chdir APP_ROOT do
 
   puts '== Installing dependencies =='
   system!('bin/setup_ruby')
-  system!('gem install bundler --conservative -v "<2"')
+  system!('bin/setup_bundler')
   system('bundle check') || system!('bundle install')
 
   # Install JavaScript dependencies if using Yarn

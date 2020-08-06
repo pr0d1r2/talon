@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+gem install bundler --conservative -v "<2"
+bundle config --local jobs "$(nproc)"
