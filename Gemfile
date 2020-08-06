@@ -42,7 +42,7 @@ group :test do
   gem 'mocha'
   gem 'database_cleaner'
   gem 'rails-controller-testing'
-  gem 'shoulda-matchers', github: 'thoughtbot/shoulda-matchers', branch: 'rails-5'
+  gem 'shoulda-matchers', '~> 4.0'
   gem 'rspec_junit_formatter'
   gem 'fabrication'
   gem 'selenium-webdriver'
