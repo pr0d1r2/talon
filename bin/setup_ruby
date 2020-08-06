@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+D_R="$(cd "$(dirname "$0")" ; pwd -P)"
+
+VERSION="$(cat "$D_R/../.ruby-version")"
+
+if [ -d "$HOME/.rbenv" ]; then
+  if [ ! -d "$HOME/.rbenv/versions/$VERSION" ]; then
+    rbenv install "$VERSION"
+  fi
+else
+  echo "Other version managers than RBENV not yet supported!"
+  exit 1
+fi
+
+exit $?
