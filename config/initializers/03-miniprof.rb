@@ -1,7 +1,7 @@
 require 'rack-mini-profiler'
-Rack::MiniProfilerRails.initialize!(Rails.application)
 
-uri = URI.parse(ENV["REDIS_URL"])
+redis_url = (ENV["REDIS_URL"] || 'redis://127.0.0.1:6379')
+uri = URI.parse(redis_url)
 Rack::MiniProfiler.config.storage_options = { :host => uri.host, :port => uri.port, :password => uri.password }
 Rack::MiniProfiler.config.storage = Rack::MiniProfiler::RedisStore
 
