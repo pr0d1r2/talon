@@ -14,7 +14,7 @@ gem 'redis-rails', '~> 5.0.0'
 
 gem 'sass-rails'
 gem 'uglifier'
-gem 'webpacker', github: 'rails/webpacker', ref: 'b8e3873c921baf23de4c28caaaba6dae26adb0b9'
+gem 'webpacker'
 # gem 'font-awesome-rails'
 
 gem 'sidekiq'

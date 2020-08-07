@@ -45,6 +45,9 @@ module.exports = {
   ],
 
   resolve: {
+    alias: {
+      'material-ui/styles/palette': 'material-ui/styles/createPalette',
+    },
     extensions: settings.extensions,
     modules: [
       resolve(settings.source_path),
