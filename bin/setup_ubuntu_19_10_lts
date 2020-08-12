@@ -1,0 +1,214 @@
+#!/usr/bin/env bash
+
+set -e
+
+info() {
+  while [[ -n "${1:-}" ]]
+  do
+    echo -e " * $1" > /dev/tty
+    shift
+  done
+}
+
+# param $1 the info message to show
+# param $2 the error code to return
+function error() {
+  echo "$1" >&2
+  exit "$2"
+}
+
+# param $1 the URL to download
+# param $2 the file path where download should be saved. Optional, if none,
+#  output will be written to stdout
+fetch () {
+  echo "Downloading $1" >&2
+  \typeset target
+  target="${2:--}"; # '-' is a default, because wget -O - prints to STDOUT
+  wget -nv "$1" -O "$target"
+}
+
+disable_bash_verbose() {
+  set +o xtrace
+
+  "$@"
+
+  if [[ ${verbose:-} ]]
+  then
+    set -o xtrace
+  fi
+}
+
+
+print_help() {
+  echo "Setup on Ubuntu 19.10."
+  echo "Usage: $0 [--options]"
+  echo "  --bare, -b            Install crucial dependencies without services"
+  echo "  --services, -s        Install services (SQLite3) natively."
+  echo "  --usage, --help, -h   Print this help and quit."
+  echo "  --verbose, -v         Print all the logs to STDOUT."
+}
+
+
+setup_logs() {
+  mkdir -p "$app_dir/log"
+  log="$app_dir/log/setup_ubuntu_19_10_lts.log"
+  echo " * Logging to $log"
+
+  if [[ -n "${verbose:-}" ]]
+  then
+    exec &> >(tee -a "$log") 2>&1
+  else
+    exec > "$log" 2>&1
+  fi
+}
+
+install_tools() {
+  info "Installing tools (apt_fast)"
+  sudo add-apt-repository -y ppa:apt-fast/stable
+  sudo apt-get update
+  sudo DEBIAN_FRONTEND=noninteractive apt-get -y -q install apt-fast
+}
+
+setup_npm() {
+  info "Setting up npm"
+  fetch https://deb.nodesource.com/setup_12.x | sudo -E bash -
+  PACKAGES+=(nodejs)
+}
+
+setup_yarn() {
+  info "Setting up yarn"
+  fetch https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+  echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+  PACKAGES+=(yarn) # we need a specific version of yarn
+}
+
+setup_chrome() {
+  info "Setting up chrome"
+  fetch https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+  echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
+  PACKAGES+=(google-chrome-stable)
+}
+
+setup_libs() {
+  PACKAGES+=(libssl-dev libreadline-dev zlib1g-dev autoconf bison build-essential libyaml-dev libreadline-dev libncurses5-dev libffi-dev libgdbm-dev unzip g++ gcc autoconf automake bison libc6-dev libffi-dev libgdbm-dev libncurses5-dev libsqlite3-dev libtool libyaml-dev make pkg-config sqlite3 zlib1g-dev libgmp-dev libreadline-dev libssl-dev)
+  PACKAGES+=(imagemagick libmagickwand-dev)
+  PACKAGES+=(gnupg2)
+}
+
+setup_icons_regenerate() {
+  # NOTE: for reference already included in setup_libs()
+  # PACKAGES+=(imagemagick libmagickwand-dev)
+  PACKAGES+=(parallel)
+}
+
+setup_dev_tools() {
+  PACKAGES+=(hunspell)
+  PACKAGES+=(nginx)
+}
+
+setup_services() {
+  if [[ -n "${services:-}" ]]
+  then
+    PACKAGES+=(sqlite3)
+  fi
+}
+
+install_packages() {
+  info "Installing ${#PACKAGES[*]} packages."
+  sudo apt-fast update
+  sudo apt-fast -y install "${PACKAGES[@]}"
+}
+
+install_ruby() {
+  info "Installing ruby"
+  gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+  fetch https://get.rvm.io | disable_bash_verbose bash -s stable
+  disable_bash_verbose source ~/.rvm/scripts/rvm
+  disable_bash_verbose rvm install "$(cat .ruby-version)"
+
+  MESSAGES+=("[RVM] In order to use RVM-installed ruby in your current shell, \e[31myou need to load RVM as a function\e[0m.")
+  MESSAGES+=("[RVM] Call: \`source ~/.rvm/scripts/rvm\` in your shell.")
+}
+
+configure_services() {
+  if [[ -n "${services:-}" ]]
+  then
+    info "Configuring services"
+  fi
+}
+
+# param $1 name of the script (global $0)
+init() {
+  PACKAGES=()
+  MESSAGES=()
+
+  bin_dir="$(cd "$(dirname "$1")" && pwd)"
+  app_dir="$(dirname "$bin_dir")"
+
+  cd "$app_dir" || error "cannot change dir to '$app_dir'" $?
+  mkdir -p "$app_dir/tmp"
+}
+
+# param $@ script params (global $@)
+handle_params() {
+  if [[ $# -eq 0 ]]
+  then
+    usage=1
+  fi
+
+  while [[ -n "${1:-}" ]]
+  do
+    case "$1" in
+      ("--bare"|"-b")     run_setup=1;;
+      ("--services"|"-s") services=1; run_setup=1 ;;
+      ("--verbose"|"-v")  verbose=1 ;;
+      (*)                 usage=1 ;;
+    esac
+    shift
+  done
+
+  if [[ -n "${usage:-}" || -z "${run_setup:-}" ]]
+  then
+    print_help && exit 0
+  fi
+}
+
+# param $1 name of the script (global $0)
+# param $2+ rest of the script params (global $@)
+setup_ubuntu() {
+  \typeset services docker usage verbose log app_dir bin_dir run_setup
+  \typeset -a PACKAGES MESSAGES
+
+  init "$1"
+  shift
+  handle_params "$@"
+  setup_logs "$@"
+
+  install_tools
+
+  setup_npm
+  setup_yarn
+  setup_chrome
+  setup_libs
+  setup_services
+  setup_icons_regenerate
+  setup_dev_tools
+
+  install_packages
+  install_ruby
+
+  configure_services
+  info "\e[0;32mInstallation successful\e[0m" "${MESSAGES[@]}"
+}
+
+if [[ " $* " =~ " -v " ||  " $* " =~ " --verbose " ]]
+then
+  export verbose=1
+  export PS4="+ \${BASH_SOURCE} \${FUNCNAME[0]:+\${FUNCNAME[0]}()}  \${LINENO} > "
+  set -o xtrace
+else
+  export verbose
+  unset verbose
+fi
+
+setup_ubuntu "$0" "$@"
