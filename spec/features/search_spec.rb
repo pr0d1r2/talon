@@ -1,13 +1,13 @@
-require 'rails_helper'
+require 'feature_helper'
 
 RSpec.feature "Search", type: :feature, js: true do
   scenario "shows form" do
-    visit "/"
+    visit_root
     expect(page).to have_selector("#search form input")
   end
 
   scenario "clear button" do
-    visit "/"
+    visit_root
     expect(page).not_to have_selector("#search form .clearbtn")
 
     fill_in "url", with: "test"
@@ -19,7 +19,7 @@ RSpec.feature "Search", type: :feature, js: true do
   end
 
   scenario "shows error when inputting invalid URL" do
-    visit "/"
+    visit_root
     fill_in "url", with: "test"
     find('#search form input').native.send_key(:enter)
     expect(page).to have_selector("#errormodal", text: "Invalid URL")
@@ -29,7 +29,7 @@ RSpec.feature "Search", type: :feature, js: true do
     url = "https://www.youtube.com/watch?v=8X8QfZYdx3s"
     info = JSON.parse(file_fixture("video.json").read)
 
-    visit "/"
+    visit_root
     fill_in "url", with: url
     find('#search form input').native.send_key(:enter)
     YoutubeDL.expects(:info).twice.with(url).returns(info)

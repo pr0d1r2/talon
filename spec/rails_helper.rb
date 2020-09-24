@@ -28,7 +28,6 @@ ActiveRecord::Migration.maintain_test_schema!
 
 RSpec.configure do |config|
   config.include(Helpers)
-  config.include(FeatureHelpers)
 
   config.mock_framework = :mocha
   
@@ -99,24 +98,3 @@ Shoulda::Matchers.configure do |config|
     with.library :rails
   end
 end
-
-require 'webdrivers/chromedriver'
-
-Capybara.register_driver(:headless_chrome) do |app|
-  caps = Selenium::WebDriver::Remote::Capabilities.chrome(
-    chromeOptions: { args: %w[headless disable-gpu window-size=1920x1080] }
-  )
-
-  Capybara::Selenium::Driver.new(app, browser: :chrome, desired_capabilities: caps)
-end
-
-Capybara.register_driver :chrome do |app|
-  caps = Selenium::WebDriver::Remote::Capabilities.chrome(
-    chromeOptions: { args: %w[window-size=1920x1080] }
-  )
-
-  Capybara::Selenium::Driver.new(app, browser: :chrome, desired_capabilities: caps)
-end
-
-# Capybara.javascript_driver = :chrome
-Capybara.javascript_driver = :headless_chrome

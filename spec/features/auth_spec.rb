@@ -1,8 +1,9 @@
-require 'rails_helper'
+require 'feature_helper'
 
 RSpec.feature "Authentication", type: :feature, js: true do
   scenario "shows forms" do
-    visit "/"
+    visit_root
+
     click_button "Login"
     expect_to_see_auth_form(:login)
 
